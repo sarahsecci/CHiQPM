@@ -18,7 +18,7 @@ def visualize_explanation_tree(
         predicted_classes: set[int], # List of predicted class indices
         output_folder: Path,
         filename: str,
-feature_to_color_mapping ={},
+        feature_to_color_mapping ={},
 
 
         global_plot: bool = True,
@@ -27,9 +27,8 @@ feature_to_color_mapping ={},
     """
     Builds and saves a hierarchical explanation graph for a model's prediction on a sample.
 
-    This function creates a graph where nodes are either features or classes, and edges represent
-    the hierarchical decision path. It generates both a main visualization and several
-    depth-specific visualizations.
+    This function creates a graph where nodes are either features and edges represent
+    the hierarchical decision path.
 
     Args:
         hierarchy_data: A list of dictionaries representing the hierarchy levels.
@@ -38,12 +37,15 @@ feature_to_color_mapping ={},
         label_idx: The ground truth class index for the sample.
         class_names: A list mapping class indices to human-readable names.
         feature_activations: The feature activation tensor for this sample.
+        pred_idx: The predicted class index for the sample.
+        predicted_classes: A set of class indices that are considered as predictions for this sample.
         output_folder: The directory where the visualization files will be saved.
-        sample_logits: The raw logit tensor from the model for this sample.
-        hiera_classes: A list of classes relevant at each hierarchy level.
+        filename: The base name for the saved visualization files (without extension).
+        feature_to_color_mapping: A dictionary mapping feature indices to specific colors for visualization.
+
         global_plot: If True, generates a global plot considering all classes.
                      If False, generates a local plot focused on the predicted path.
-        summarize_loc: If True, groups classes with identical explanation paths into a single node.
+        summarize_loc: If True, groups classes with identical explanation paths into a single node, summarizing their name.
     """
     # --- DEDUCED ARGUMENTS ---
 
@@ -147,15 +149,19 @@ feature_to_color_mapping ={},
     # --- 4. Create NetworkX graph and define node attributes ---
     graph = nx.DiGraph(adjacency_matrix)
     color_map, nodes_sizes, nodelabels = [], [], {}
-
+    num_nodes = graph.number_of_nodes()
+    color_map = [None] * num_nodes
+    nodes_sizes = [None] * num_nodes
     feature_scaled_for_size = feature_activations / feature_activations.max() * 100
     colors_per_feature = get_colors_per_feature(feature_activations, list(unique_feats_independent), feature_to_color_mapping)
 
     for (i, feat, prev), idx in feature_mapper.items():
-        nodelabels[idx] = ""
-        graph.nodes[idx]["type"] = "feature"
-        color_map.append(colors_per_feature[feat])
-        nodes_sizes.append(feature_scaled_for_size[feat].item())
+            nodelabels[idx] = ""
+            graph.nodes[idx]["type"] = "feature"
+            color_map[idx] = colors_per_feature[feat]
+            nodes_sizes[idx] = feature_scaled_for_size[feat].item()
+        # color_map.append(colors_per_feature[feat])
+        # nodes_sizes.append(feature_scaled_for_size[feat].item())
 
     for cls in sorted(class_mapper.keys()):
         if cls not in class_mapper_new: continue
@@ -168,17 +174,22 @@ feature_to_color_mapping ={},
             nodelabels[idx] = f"Bold{class_label}"
 
         graph.nodes[idx]["type"] = "class"
-        nodes_sizes.append(0)
+        color_map[idx] = [0, 0, 0]# not shown anyway, since node size is 0 for classes.
+        nodes_sizes[idx] = 0
 
-        if cls == label_idx:
-            color_map.append('red')
-        elif cls == pred_idx:
-            color_map.append('orange')
-        else:
-            color_map.append([0, 0, 0]) # not shown anyway, since node size is 0 for classes.
 
-    color_map.append("black")
-    nodes_sizes.append(1)
+        # nodes_sizes.append(0)
+        #
+        # if cls == label_idx:
+        #     color_map.append('red')
+        # elif cls == pred_idx:
+        #     color_map.append('orange')
+        # else:
+        #     color_map.append([0, 0, 0]) # not shown anyway, since node size is 0 for classes.
+    color_map[root_idx] = "black"
+    nodes_sizes[root_idx] = 0
+    # color_map.append("black")
+    # nodes_sizes.append(1)
     nodelabels[root_idx] = ""
     width_for_this_graph = 2.5 - 1 * int(global_plot)
     # --- 5. Find and highlight the prediction path ---
