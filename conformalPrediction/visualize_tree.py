@@ -88,7 +88,7 @@ if __name__ == '__main__':
     features_test, outputs_test, labels_test = get_feats_logits_labels(model, test_loader)
     cal_logits, cal_labels, cal_features, test_logits, test_labels, test_features, test_indices = get_logits_and_labels(
         features_test, outputs_test, labels_test, 10, )
-    graph_folder = Path.home() / "tmp" / "CHiQPMLocalHierarchicalExplainer"
+    graph_folder = Path.home() / "tmp" / "CHiQPMExplanations"
     # Since the examples chosen in readme are for classes with indices 25,26, 176 and 181 we only show these
     test_labels_in_readme = [25, 26, 176, 181]
     kept_label = torch.zeros_like(test_labels)
@@ -106,8 +106,7 @@ if __name__ == '__main__':
 
     explainer = HierarchicalExplainer(model.linear.weight)
     for acc in [ .9,.95,  .925,.88, ]: #
-        graph_folder_ac = graph_folder / f"acc_{acc}"
-        graph_folder_ac.mkdir(parents=True, exist_ok=True)
+
 
         predictor, needs_feats = get_score("CHiQPM", model.linear.weight)
 
@@ -117,12 +116,15 @@ if __name__ == '__main__':
         prediction_sets = get_predictions(test_logits, predictor, test_features, needs_feats)
         if indices_of_test_samples != []:
             for sample in indices_of_test_samples:
-                graph_folder_acc = graph_folder_ac / f"{str(sample)}SampleIndex"
-                graph_folder_acc.mkdir(parents=True, exist_ok=True)
-                filename_end = f"Sample_{sample}_label_{class_names[test_labels[sample].item()]}"
+
+
                 prediction = torch.argmax(test_logits[sample]).item()
                 class_pair_interesting = explainer.get_most_similar_classes(prediction,)
-                image = test_loader.dataset.__getitem__(index_in_dataset[sample].item())[0]
+                index_in_dataset_of_sample = index_in_dataset[sample].item()
+                filename_end = f"Sample_{index_in_dataset_of_sample}_label_{class_names[test_labels[sample].item()]}"
+                image = test_loader.dataset.__getitem__(index_in_dataset_of_sample)[0]
+                graph_folder_acc = graph_folder / f"SampleIndex_{str(index_in_dataset_of_sample)}" / f"acc_{acc}"
+                graph_folder_acc.mkdir(parents=True, exist_ok=True)
                 image_unnormalized = (image * test_loader.dataset.transform.transforms[-1].std[:, None, None] +
                                       test_loader.dataset.transform.transforms[-1].mean[:, None, None])
                 active_mean = get_active_mean(model, train_loader, folder)
@@ -134,6 +136,8 @@ if __name__ == '__main__':
 
                 explainer.generate_explanation(test_logits[sample], test_features[sample], prediction_sets[sample],feature_to_color_mapping=colormapping, gt_label = test_labels[sample], folder = graph_folder_acc, filename = f"Graph_{filename_end}")
         else:
+            graph_folder_ac = graph_folder / f"acc_{acc}"
+            graph_folder_ac.mkdir(parents=True, exist_ok=True)
             for sample in range(len(test_logits)):
-                explainer.generate_explanation(test_logits[sample], test_features[sample], prediction_sets[sample], gt_label = test_labels[sample], folder = graph_folder_acc, filename = f"sample_{sample}_label_{test_labels[sample].item()}")
+                explainer.generate_explanation(test_logits[sample], test_features[sample], prediction_sets[sample], gt_label = test_labels[sample], folder = graph_folder_ac, filename = f"sample_{sample}_label_{test_labels[sample].item()}")
 

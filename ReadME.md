@@ -130,28 +130,40 @@ Note that the heatmaps transport certainty, as they are scaled based on the acti
 
 CHiQPM offers the novel hierarchical local explanations, which can be visualized using the file visualize_tree.py.
 By default, it is configured to create a local explanation including heatmap and graph  (e.g. Fig. 2)  and a global 
-class comparison (e.g. Fig. 1)  for one sample each of the above classes.
-This will save images like this to ~/ "tmp" / "CHiQPMLocalHierarchicalExplainer". For example, CHiQPM finds these
-features in that test image:
+class comparison (e.g. Fig. 1)  for one sample each of the above classes. For example, with the uploaded CHiQPM, calibrated to guarantee 90% accuracy,
+these explanations will be created for the test image shown in the local explanation with index 657 and saved to 
+~tmp/CHiQPMExplanations/SampleIndex_657/acc_0.9:
 
+Local explanation with the heatmaps showing where the features are activating:
 <p align="center">
-    <img height="100" src="fig/Cherry_3_Local_label_25.png"> 
+    <img height="100" src="fig/Local_Sample_657_label_Bronzed_Cowbird.png"> 
 </p>
-With this hierarchical explanation to guarantee 90% accuracy, saved in acc_0.9/local:
-<p align="center">
-    <img height="400" src="fig/Cherry_3_Graph_label_25.png"> 
-</p>
-The top-1 prediction is Bronzed Cowbird, highlighted in bold, while the green path marks the set of classes that are
-predicted to ensure 90% accuracy.
-Since it predicted class Bronzed Cowbird, we also save a comparison with other classes that share 4 features with top-1.
-
+Global explanation comparing the predicted class Bronzed Cowbird with classes that share multiple features:
 <p align="center">
     <img height="400" src="fig/25_8_26_133.png"> 
 </p>
+With this hierarchical explanation:
+<p align="center">
+    <img height="400" src="fig/LocalGraph_Sample_657_label_Bronzed_Cowbird.png"> 
+</p>
+The top-1 prediction is Bronzed Cowbird, highlighted in bold, while the green path marks the set of classes that are
+predicted to ensure 90% accuracy. 
+
 Note that the colorcode for the features is consistent across all images.
 
 ## Citations
 Please cite this work as:\
+CHiQPM
+```bibtex
+@inproceedings{
+2025chiqpm,
+title={{CH}i{QPM}: Calibrated Hierarchical Interpretable Image Classification},
+author={Thomas Norrenbrock and Timo Kaiser and Sovan Biswas and Neslihan Kose and Ramesh Manuvinakurike and Bodo Rosenhahn},
+booktitle={The Thirty-ninth Annual Conference on Neural Information Processing Systems},
+year={2025},
+url={https://openreview.net/forum?id=jDJUjqUies}
+}
+```
 QPM
 ```bibtex
 @inproceedings{
@@ -196,13 +208,16 @@ One pretrained Resnet50 for Q-SENN on CUB can be obtained via this link: [Q-SENN
 ## Acknowledgement
 
 
-This work was supported by the Federal Ministry of Education and Research (BMBF), Germany under the AI service center KISSKI (grant no. 01IS22093C) and the Deutsche Forschungsgemeinschaft (DFG) under Germany’s Excellence Strategy within the Cluster of Excellence PhoenixD (EXC 2122).
-This work was partially supported by Intel Corporation and by the German Federal Ministry
-of the Environment, Nature Conservation, Nuclear Safety
-and Consumer Protection (GreenAutoML4FAS project no.
-67KI32007A). 
+This work was supported by the Federal Ministry of Education and Research (BMBF), Germany,
+under the AI service center KISSKI (grant no. 01IS22093C), the Deutsche Forschungsgemeinschaft
+(DFG) under Germany’s Excellence Strategy within the Cluster of Excellence PhoenixD (EXC2122),
+the MWK of Lower Sachsony within Hybrint (VWZN4219), the European Union under grant
+agreement no. 101136006 – XTREME. The work has been done in collaboration and partially funded
+by the Intel Corporation. This work was partially supported by the German Federal Ministry of the
+Environment, Nature Conservation, Nuclear Safety and Consumer Protection (GreenAutoML4FAS
+project no. 67KI32007A).
 
-The work was done at the Leibniz University Hannover and published at ICLR 2025.
+The work was done at the Leibniz University Hannover and published at NeurIPS 2025.
 
 <p align="center">
     <img width="100" height="100" src="fig/AutoML4FAS_Logo.jpeg"> 

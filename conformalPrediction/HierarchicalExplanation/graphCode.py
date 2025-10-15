@@ -224,11 +224,11 @@ def visualize_explanation_tree(
     draw_labels(pos, nodelabels, font_size=8 - 2 * int(global_plot))
 
     if global_plot:
-        final_folder = output_folder / "Global"
+        filename = "Global" + filename
     else:
-        final_folder = output_folder / "Local"
-    final_folder.mkdir(exist_ok=True)
-    filename_base = final_folder / filename
+        filename =  "Local"+ filename
+    output_folder.mkdir(exist_ok=True)
+    filename_base = output_folder / filename
     plt.savefig(f"{filename_base}.png", dpi=300)
     print(f"Saved main visualization to {filename_base}.png")
     plt.close("all")
