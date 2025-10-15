@@ -34,7 +34,7 @@ class HierarchicalExplainer(HieraDiffNonConformityScore):
                     break
         return tuple(answer)
 
-    def generate_explanation(self, logits,features,prediction_set, gt_label = None, feature_to_color_mapping=None, folder = None, filename = None):
+    def generate_explanation(self, logits,features,prediction_set, gt_label = None, feature_to_color_mapping=None, folder = None, filename = None, global_plot = False):
         features = features.to(self.weight.device)
         sorted_values, sorted_indices = self.get_sorted_indices_and_values(features[None])
         pred = torch.argmax(logits)[None]
@@ -66,8 +66,13 @@ class HierarchicalExplainer(HieraDiffNonConformityScore):
                     level_dict[tuple_key] = global_level_dict[tuple_key]
             hierarchy_data.append(level_dict)
             global_hierarchy_data.append(global_level_dict)
-        visualize_explanation_tree(hierarchy_data, gt_label,class_names, features,pred.item(),prediction_set,  folder, filename, feature_to_color_mapping,global_plot = False)
-        visualize_explanation_tree(global_hierarchy_data, gt_label,class_names, features,pred.item(),prediction_set, folder, filename,feature_to_color_mapping)
+        if global_plot:
+            visualize_explanation_tree(global_hierarchy_data, gt_label, class_names, features, pred.item(),
+                                       prediction_set, folder, filename, feature_to_color_mapping)
+        else:
+
+              visualize_explanation_tree(hierarchy_data, gt_label,class_names, features,pred.item(),prediction_set,  folder, filename, feature_to_color_mapping,global_plot = global_plot)
+
         pass
 
 
@@ -100,9 +105,9 @@ if __name__ == '__main__':
     indices_of_test_samples = [ 23,43,3,59]
 
     explainer = HierarchicalExplainer(model.linear.weight)
-    for acc in [ .9, ]: #.95,  .925,.88,
-        graph_folder_acc = graph_folder / f"acc_{acc}"
-        graph_folder_acc.mkdir(parents=True, exist_ok=True)
+    for acc in [ .9,.95,  .925,.88, ]: #
+        graph_folder_ac = graph_folder / f"acc_{acc}"
+        graph_folder_ac.mkdir(parents=True, exist_ok=True)
 
         predictor, needs_feats = get_score("CHiQPM", model.linear.weight)
 
@@ -112,6 +117,8 @@ if __name__ == '__main__':
         prediction_sets = get_predictions(test_logits, predictor, test_features, needs_feats)
         if indices_of_test_samples != []:
             for sample in indices_of_test_samples:
+                graph_folder_acc = graph_folder_ac / f"{str(sample)}SampleIndex"
+                graph_folder_acc.mkdir(parents=True, exist_ok=True)
                 filename_end = f"Sample_{sample}_label_{class_names[test_labels[sample].item()]}"
                 prediction = torch.argmax(test_logits[sample]).item()
                 class_pair_interesting = explainer.get_most_similar_classes(prediction,)
@@ -121,8 +128,8 @@ if __name__ == '__main__':
                 active_mean = get_active_mean(model, train_loader, folder)
                 class_indices = list(class_pair_interesting)
                 colormapping = viz_model(model, train_loader, class_indices, "Train",
-                                         active_mean, viz_folder=graph_folder)
-                generate_local_viz(image, image_unnormalized, model, colormapping,graph_folder /
+                                         active_mean, viz_folder=graph_folder_acc)
+                generate_local_viz(image, image_unnormalized, model, colormapping,graph_folder_acc /
                                    f"Local_{filename_end}.png",active_mean=active_mean )
 
                 explainer.generate_explanation(test_logits[sample], test_features[sample], prediction_sets[sample],feature_to_color_mapping=colormapping, gt_label = test_labels[sample], folder = graph_folder_acc, filename = f"Graph_{filename_end}")
