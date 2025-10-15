@@ -77,5 +77,6 @@ def get_colors_per_feature(feature, rel_features,  prior_order,
         colors[rel_features[idx]] = reordered_colors[index]
     if prior_order is not None:
         for feat in prior_order:
-            colors[feat] = prior_order[feat][-1] / 255
+            scaled_colors = prior_order[feat][-1][0] / 255
+            colors[feat] = (scaled_colors[2], scaled_colors[1], scaled_colors[0], 1.0)
     return colors

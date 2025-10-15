@@ -97,7 +97,7 @@ if __name__ == '__main__':
         class_names = load_cub_class_mapping()
         class_names = {int(k): v for k, v in class_names.items()}
     # Reasonable cherrypicks for this model
-    indices_of_test_samples = [ 23,22,3,59] # 43, 59]
+    indices_of_test_samples = [ 23,43,3,59]
 
     explainer = HierarchicalExplainer(model.linear.weight)
     for acc in [ .9, ]: #.95,  .925,.88,

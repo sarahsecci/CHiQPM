@@ -106,8 +106,9 @@ def visualize_explanation_tree(
     # --- 3. Summarize class nodes if enabled ---
     class_mapper_new = class_mapper
     full_new_mapper = class_mapper
+    remapped_labels, summarized_labels =  {}, {}
     if summarize_loc:
-        remapped_labels, summarized_labels, summarized_indices, removed_classes = {}, {}, {},[]
+        summarized_indices, removed_classes = {},[]
         igno = set()
         all_class_keys = sorted(class_mapper.keys())
         indices_to_keep = np.arange(adjacency_matrix.shape[0])
@@ -152,7 +153,7 @@ def visualize_explanation_tree(
     num_nodes = graph.number_of_nodes()
     color_map = [None] * num_nodes
     nodes_sizes = [None] * num_nodes
-    feature_scaled_for_size = feature_activations / feature_activations.max() * 100
+    feature_scaled_for_size = (feature_activations / feature_activations.max()**2) * 500
     colors_per_feature = get_colors_per_feature(feature_activations, list(unique_feats_independent), feature_to_color_mapping)
 
     for (i, feat, prev), idx in feature_mapper.items():

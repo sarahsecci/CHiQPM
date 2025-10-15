@@ -3,9 +3,34 @@ from matplotlib.colors import LinearSegmentedColormap
 import numpy as np
 
 def get_default_cmaps():
-    cmaps = [CustomCmap([1, 1, 1], x) for x in
-             [[1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0], [1, 0, 1], [255 / 255, 165 / 255, 0 / 255],
-              [74 / 255, 4 / 255, 4 / 255],[72 / 255, 60 / 255, 50 / 255] , [255 / 255, 165 / 255, 0 / 255],[205 / 255, 127 / 255, 50 / 255]]]
+    # cmaps = [CustomCmap([1, 1, 1], x) for x in
+    #          [[1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0], [1, 0, 1], [255 / 255, 165 / 255, 0 / 255],
+    #           # red, green, blue, yellow, magenta, orange
+    #           [74 / 255, 4 / 255, 4 / 255],[205 / 255, 127 / 255, 50 / 255],[72 / 255, 60 / 255, 50 / 255] , [255 / 255, 165 / 255, 0 / 255]]]
+    good_colors = [
+        [1, 0, 0],  # red
+        [0, 1, 0],  # green
+        [0, 0, 1],  # blue
+        [1, 1, 0],  # yellow
+        [1, 0, 1],  # magenta
+        [255 / 255, 165 / 255, 0 / 255],  # orange
+    ]
+
+    # Add new, distinct colors
+    new_colors = [
+        [0 / 255, 255 / 255, 255 / 255],  # cyan
+        [128 / 255, 0 / 255, 128 / 255],  # purple
+        [0 / 255, 128 / 255, 128 / 255],  # teal
+        [230 / 255, 190 / 255, 255 / 255],  # lavender
+        [170 / 255, 110 / 255, 40 / 255],  # a good brown
+        [255 / 255, 20 / 255, 147 / 255],  # deep pink
+        [128 / 255, 128 / 255, 0 / 255],  # olive
+        [0 / 255, 0 / 255, 128 / 255],  # navy
+    ]
+
+    all_colors = good_colors + new_colors
+
+    cmaps = [CustomCmap([1, 1, 1], x) for x in all_colors]
     colormaps = [convert_cmap_to_cv(x) for x in cmaps]
 
     return colormaps
