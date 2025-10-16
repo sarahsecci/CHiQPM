@@ -3,10 +3,6 @@ from matplotlib.colors import LinearSegmentedColormap
 import numpy as np
 
 def get_default_cmaps():
-    # cmaps = [CustomCmap([1, 1, 1], x) for x in
-    #          [[1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0], [1, 0, 1], [255 / 255, 165 / 255, 0 / 255],
-    #           # red, green, blue, yellow, magenta, orange
-    #           [74 / 255, 4 / 255, 4 / 255],[205 / 255, 127 / 255, 50 / 255],[72 / 255, 60 / 255, 50 / 255] , [255 / 255, 165 / 255, 0 / 255]]]
     good_colors = [
         [1, 0, 0],  # red
         [0, 1, 0],  # green
