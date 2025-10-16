@@ -79,22 +79,11 @@ class HieraDiffNonConformityScore(BaseScore):
 
         masked_for_upscore = sorted_values * delta_n
         # eq. 10 would be sum over above
-
-        # B, K, C are the dimensions of sorted_values
         B, K, C = sorted_values.shape
         device = sorted_values.device
-
-        # 1. Create the Batch index tensor
         batch_idx = torch.arange(B, device=device).view(B, 1)  # Shape: (B, 1)
-
-        # 2. You already have the K index tensor: mismatch_position
-        #    Shape: (B, C)
-
-        # 3. Create the Class index tensor
         class_idx = torch.arange(C, device=device).view(1, C)  # Shape: (1, C)
 
-        # PyTorch will broadcast the (B, 1) and (1, C) indices to match the (B, C)
-        # shape of mismatch_position, allowing it to select one element for each (b,c) pair.
         # eq. 11 involves adding point of diversion. 0 if no mismatch
         value_at_diversion = sorted_values[batch_idx, mismatch_position, class_idx] * contains_one_mismatch
 

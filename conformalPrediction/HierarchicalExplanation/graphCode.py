@@ -47,7 +47,6 @@ def visualize_explanation_tree(
                      If False, generates a local plot focused on the predicted path.
         summarize_loc: If True, groups classes with identical explanation paths into a single node, summarizing their name.
     """
-    # --- DEDUCED ARGUMENTS ---
 
 
     alpha = 0.6
@@ -163,8 +162,6 @@ def visualize_explanation_tree(
             graph.nodes[idx]["type"] = "feature"
             color_map[idx] = colors_per_feature[feat]
             nodes_sizes[idx] = feature_scaled_for_size[feat].item()
-        # color_map.append(colors_per_feature[feat])
-        # nodes_sizes.append(feature_scaled_for_size[feat].item())
 
     for cls in sorted(class_mapper.keys()):
         if cls not in class_mapper_new: continue
@@ -179,26 +176,12 @@ def visualize_explanation_tree(
         graph.nodes[idx]["type"] = "class"
         color_map[idx] = [0, 0, 0]# not shown anyway, since node size is 0 for classes.
         nodes_sizes[idx] = 0
-
-
-        # nodes_sizes.append(0)
-        #
-        # if cls == label_idx:
-        #     color_map.append('red')
-        # elif cls == pred_idx:
-        #     color_map.append('orange')
-        # else:
-        #     color_map.append([0, 0, 0]) # not shown anyway, since node size is 0 for classes.
     color_map[root_idx] = "black"
     nodes_sizes[root_idx] = 0
-    # color_map.append("black")
-    # nodes_sizes.append(1)
     nodelabels[root_idx] = ""
     width_for_this_graph = 2.5 - 1 * int(global_plot)
     # --- 5. Find and highlight the prediction path ---
     for sub_pred_idx in predicted_classes:
-
-      #  if sub_pred_idx in class_mapper_new:
             path = nx.shortest_path(graph, source=root_idx, target=full_new_mapper[sub_pred_idx])
 
 
@@ -216,7 +199,6 @@ def visualize_explanation_tree(
     pos = get_smaller_v_space_pos(graph, root_idx)
 
     plt.figure(figsize=(10, 8))
-    # pos and node_sizes have different lengths if summarize_loc is True
     nx.draw(graph, pos, node_color=color_map, node_size=nodes_sizes, alpha=alpha, edge_color=colors,
             width=width_for_this_graph)
 
