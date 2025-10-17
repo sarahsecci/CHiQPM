@@ -2,7 +2,7 @@
 
  
 This repository contains the code for the NeurIPS 2025 paper
-[*CHiQPM: Calibrated Hierarchical Interpretable Image Classification*](https://openreview.net/forum?id=GlAeL0I8LX) by Thomas
+[*CHiQPM: Calibrated Hierarchical Interpretable Image Classification*](https://www.tnt.uni-hannover.de/papers/data/1801/Neurips2025_ChiQPM%20(12)%20(2).pdf) by Thomas
 Norrenbrock , 
 Timo Kaiser,  Sovan Biswas, Neslihan Kose, Ramesh Manuvinakurike,
 and Bodo Rosenhahn.
@@ -19,7 +19,7 @@ and Bodo Rosenhahn
 and the SLDD-model from [*Take 5: 
 Interpretable Image Classification with a Handful of Features*](https://arxiv.org/pdf/2303.13166) (NeurIPS 
 Workshop) from the same authors is included.
-This repository extends [*QPM's*](https://github.com/ThomasNorr/Q-SENN).
+This repository extends [*QPM's*](https://github.com/ThomasNorr/qpm).
 
 <p align="center">
     <img height="300" src="fig/fig2Chiqpm.png"> 
