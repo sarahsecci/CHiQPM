@@ -2,7 +2,7 @@ from pathlib import Path
 
 import torch
 
-from conformalPrediction.HierarchicalExplanation.graphCode import visualize_explanation_tree
+from conformalPrediction.HierarchicalExplanation.graphCode import visualize_explanation_tree, visualize_explanation_tree_to_pil
 from conformalPrediction.cleanScoreFunction import HieraDiffNonConformityScore
 from conformalPrediction.eval_cp import get_logits_and_labels
 from conformalPrediction.utils import get_score, calibrate_predictor, get_predictions
@@ -34,7 +34,7 @@ class HierarchicalExplainer(HieraDiffNonConformityScore):
                     break
         return tuple(answer)
 
-    def generate_explanation(self, logits,features,prediction_set, gt_label = None, feature_to_color_mapping=None, folder = None, filename = None, global_plot = False):
+    def generate_explanation(self, logits,features,prediction_set, gt_label = None, feature_to_color_mapping=None, folder = None, filename = None, global_plot = False, class_names = None):
         features = features.to(self.weight.device)
         sorted_values, sorted_indices = self.get_sorted_indices_and_values(features[None])
         pred = torch.argmax(logits)[None]
@@ -66,6 +66,10 @@ class HierarchicalExplainer(HieraDiffNonConformityScore):
                     level_dict[tuple_key] = global_level_dict[tuple_key]
             hierarchy_data.append(level_dict)
             global_hierarchy_data.append(global_level_dict)
+        
+        if class_names is None:
+            class_names={}
+            
         if global_plot:
             visualize_explanation_tree(global_hierarchy_data, gt_label, class_names, features, pred.item(),
                                        prediction_set, folder, filename, feature_to_color_mapping)
@@ -74,6 +78,71 @@ class HierarchicalExplainer(HieraDiffNonConformityScore):
               visualize_explanation_tree(hierarchy_data, gt_label,class_names, features,pred.item(),prediction_set,  folder, filename, feature_to_color_mapping,global_plot = global_plot)
 
         pass
+
+    def generate_explanation_to_pil(self, logits, features, prediction_set, gt_label=None, feature_to_color_mapping=None, global_plot=False, class_names=None):
+        """
+        Generate explanation tree and return as PIL Image (no file saving).
+        
+        This is a memory-efficient version for interactive applications like Gradio demos.
+        
+        Args:
+            logits: Model output logits for the sample
+            features: Feature activations for the sample
+            prediction_set: Set of predicted class indices from conformal prediction
+            gt_label: Ground truth label (optional)
+            feature_to_color_mapping: Dict mapping feature indices to colors
+            global_plot: If True, generate global tree; if False, generate local tree
+            class_names: Dict mapping class indices to names
+            
+        Returns:
+            PIL.Image: The rendered tree visualization
+        """
+        features = features.to(self.weight.device)
+        sorted_values, sorted_indices = self.get_sorted_indices_and_values(features[None])
+        pred = torch.argmax(logits)[None]
+        delta_n = self.get_shared_with_preds_from_sorted(sorted_indices, pred)
+        values_for_this_sample = sorted_values[0]
+        indices_for_this_sample = sorted_indices[0]
+        delta_n_for_this_sample = delta_n[0]
+
+        hierarchy_data = []
+        global_hierarchy_data = []
+
+        # Build hierarchy data
+        for level in range(self.weights_per_class):
+            level_dict = {}
+            global_level_dict = {}
+            for class_idx in range(self.n_classes):
+                delta_n_for_this_class = self.get_shared_with_preds_from_sorted(sorted_indices, class_idx)
+                predicted_classes_down_the_road = set(delta_n_for_this_class[0, level].nonzero().flatten().tolist())
+                this_f_idx = indices_for_this_sample[level, class_idx].item()
+                act = values_for_this_sample[level, class_idx].item()
+                sharing_at_first_level = delta_n_for_this_sample[0, class_idx].item()
+                prev = None
+                if level > 0:
+                    prev = tuple(indices_for_this_sample[:level, class_idx].tolist())
+
+                tuple_key = (this_f_idx, act, prev, class_idx)
+                global_level_dict[tuple_key] = predicted_classes_down_the_road
+                if sharing_at_first_level:
+                    level_dict[tuple_key] = global_level_dict[tuple_key]
+            hierarchy_data.append(level_dict)
+            global_hierarchy_data.append(global_level_dict)
+
+        if class_names is None:
+            class_names = {}
+
+        # Use the new PIL-returning function
+        if global_plot:
+            return visualize_explanation_tree_to_pil(
+                global_hierarchy_data, gt_label, class_names, features, pred.item(),
+                prediction_set, feature_to_color_mapping, global_plot=True
+            )
+        else:
+            return visualize_explanation_tree_to_pil(
+                hierarchy_data, gt_label, class_names, features, pred.item(),
+                prediction_set, feature_to_color_mapping, global_plot=False
+            )
 
 
 
