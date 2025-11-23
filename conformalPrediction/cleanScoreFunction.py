@@ -87,11 +87,8 @@ class HieraDiffNonConformityScore(BaseScore):
         # eq. 11 involves adding point of diversion. 0 if no mismatch
         value_at_diversion = sorted_values[batch_idx, mismatch_position, class_idx] * contains_one_mismatch
 
-
-
-
         # include eq. 12, limiting maximum level
-        limit_delta = torch.ones(*delta_n.shape[1:])
+        limit_delta = torch.ones(B, C, device=device)
         if self.lvl > 0:
             limit_delta = delta_n[:,self.lvl - 1]  # 1 indicates we only predict with one shared, hence requiring sharing at index 0
         limited_up_score = -masked_for_upscore[:, self.lvl:].sum(dim=1) - value_at_diversion # eq.11
