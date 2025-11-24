@@ -9,6 +9,8 @@ from get_data import get_data
 from visualization.utils import get_feats_logits_labels
 from conformalPrediction.eval_cp import get_logits_and_labels
 
+from configs.demo_paths import CAL_DATA_ROOT
+
 def prepare_calibration_data():
     args = get_args_for_loading_model()
     train_loader, test_loader = get_data(args.dataset, crop=args.cropGT, img_size=args.img_size)
@@ -27,7 +29,7 @@ def prepare_calibration_data():
     )
     
     # Save calibration data
-    save_path = Path.home() / "tmp" / "CHiQPM_calibration" / f"seed_{args.seed}"
+    save_path = CAL_DATA_ROOT / f"seed_{args.seed}"
     save_path.mkdir(parents=True, exist_ok=True)
     
     torch.save({

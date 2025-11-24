@@ -6,16 +6,14 @@ Handles feature selection, representative image loading, and grid creation.
 import os
 import torch
 import matplotlib.pyplot as plt
-from pathlib import Path
 from PIL import Image
 from io import BytesIO
 import torchvision.transforms as transforms
-
 from get_data import DeepLabBirdCrop
 from visualization.get_heatmaps import get_visualizations
 from visualization.utils import get_active_mean
 from configs.dataset_params import normalize_params
-
+from configs.demo_paths import DATASET_ROOT, REPRESENTATIVES_ROOT
 
 class FeatureGridGenerator:
     """
@@ -24,8 +22,12 @@ class FeatureGridGenerator:
     - Feature selection across multiple predictions
     - Grid visualization creation
     """
+
+    DEFAULT_PADDING = 20
+    DEFAULT_GAMMA = 3.0  # Gamma for visualization intensity
+    DPI = 150 # DPI for saved images
     
-    def __init__(self, model, train_loader, folder, class_names, device, img_size=224, n_features_per_class=5):
+    def __init__(self, model, train_loader, folder, class_names, device, img_size=224, n_features_per_class=5, padding=None, gamma=None):
         """
         Initialize feature grid generator.
         
@@ -37,7 +39,11 @@ class FeatureGridGenerator:
             device: torch.device to use
             img_size: Image size for resizing (default: 224)
             n_features_per_class: Number of features to show per class (default: 5)
+            padding: Padding for image cropping (default: DEFAULT_PADDING)
+            gamma: Gamma for visualization intensity (default: DEFAULT_GAMMA)
         """
+        self.padding = padding if padding is not None else self.DEFAULT_PADDING
+        self.gamma = gamma if gamma is not None else self.DEFAULT_GAMMA
         self.model = model
         self.train_loader = train_loader
         self.folder = folder
@@ -48,23 +54,24 @@ class FeatureGridGenerator:
         
         self.active_mean = get_active_mean(model, train_loader, folder)
         
-        self.dataset_path = Path.home() / "tmp" / "Datasets" / "CUB200" / "CUB_200_2011" / "images"
-        self.representatives_path = Path.home() / "tmp" / "Datasets" / "CUB200_representatives"
+        self.dataset_path = DATASET_ROOT
+        self.representatives_path = REPRESENTATIVES_ROOT
+
+        self.representative_cache = {}
     
-    def preprocess_image(self, image_pil, padding=20):
+    def preprocess_image(self, image_pil):
         """
         Crops, resizes, normalizes the image and converts to tensor.
         
         Args:
             image_pil: PIL.Image - input image
-            padding: int - padding for cropping
             
         Returns:
             Tuple of:
                 - unnormalized image tensor [1,3,H,W]
                 - normalized image tensor [1,3,H,W]
         """
-        cropper = DeepLabBirdCrop(padding=padding)
+        cropper = DeepLabBirdCrop(padding=self.padding)
         cropped_image = cropper(image_pil)
 
         preprocess = transforms.Compose([
@@ -79,20 +86,56 @@ class FeatureGridGenerator:
 
         return image_tensor, normalized_image_tensor
     
+    # def get_representative_class_image(self, predicted_class):
+    #     """
+    #     Load the presaved representative image for a predicted class.
+        
+    #     Args:
+    #         predicted_class: Class index
+            
+    #     Returns:
+    #         PIL.Image or None if no representative found
+    #     """
+    #     class_folders = [f for f in os.listdir(self.dataset_path) if f.startswith(f"{predicted_class+1:03d}.")]
+        
+    #     if not class_folders:
+    #         return None
+
+    #     class_folder = class_folders[0]
+    #     representatives_path = self.representatives_path / class_folder
+        
+    #     if representatives_path.exists():
+    #         cropped_images = [f for f in os.listdir(representatives_path) if f.endswith('_cropped.jpg')]
+            
+    #         if cropped_images:
+    #             representative_image_path = representatives_path / cropped_images[0]
+    #             return Image.open(representative_image_path)
+        
+    #     print(f"Warning: No representative found for class {class_folder}")
+    #     return None
+
     def get_representative_class_image(self, predicted_class):
         """
-        Load the presaved representative image for a predicted class.
+        Load and return the preprocessed representative image for a predicted class.
+        Uses caching to avoid repeated disk I/O and preprocessing.
         
         Args:
             predicted_class: Class index
             
         Returns:
-            PIL.Image or None if no representative found
+            Tuple of (unnormalized_tensor, normalized_tensor) or (None, None) if not found
         """
+        # Check cache first
+        if predicted_class in self.representative_cache:
+            return self.representative_cache[predicted_class]
+        
+        # Not in cache - load from disk
         class_folders = [f for f in os.listdir(self.dataset_path) if f.startswith(f"{predicted_class+1:03d}.")]
         
         if not class_folders:
-            return None
+            # Cache None to avoid repeated lookups
+            self.representative_cache[predicted_class] = (None, None)
+            return None, None
 
         class_folder = class_folders[0]
         representatives_path = self.representatives_path / class_folder
@@ -102,10 +145,18 @@ class FeatureGridGenerator:
             
             if cropped_images:
                 representative_image_path = representatives_path / cropped_images[0]
-                return Image.open(representative_image_path)
+                pil_image = Image.open(representative_image_path)
+                
+                # Preprocess immediately and cache tensors
+                unnorm_tensor, norm_tensor = self.preprocess_image(pil_image)
+                self.representative_cache[predicted_class] = (unnorm_tensor, norm_tensor)
+                
+                return unnorm_tensor, norm_tensor
         
+        # Not found - cache None
         print(f"Warning: No representative found for class {class_folder}")
-        return None
+        self.representative_cache[predicted_class] = (None, None)
+        return None, None
     
     def _create_visualization_grid(self, viz_all, all_features, input_unnormalized, 
                                    class_images_unnormalized_list, prediction_list):
@@ -179,14 +230,14 @@ class FeatureGridGenerator:
         plt.subplots_adjust(wspace=0.1, hspace=0.1)
 
         buf = BytesIO()
-        plt.savefig(buf, format='png', bbox_inches='tight', dpi=150)
+        plt.savefig(buf, format='png', bbox_inches='tight', dpi=self.DPI)
         buf.seek(0)
         comparison_image = Image.open(buf)
-        plt.close(fig)
+        plt.close("all")
         return comparison_image
     
     def generate_feature_grid(self, input_image, input_image_normalized, output_logits, 
-                             final_features, k_predictions):
+                         final_features, k_predictions):
         """
         Generate the complete feature visualization grid.
         
@@ -216,10 +267,9 @@ class FeatureGridGenerator:
         predicted_classes_images_normalized = []
 
         for p in predictions:
-            representative_image_pil = self.get_representative_class_image(p)
-            representative_image, representative_image_normalized = self.preprocess_image(representative_image_pil)
-            predicted_classes_images.append(representative_image)
-            predicted_classes_images_normalized.append(representative_image_normalized)
+            rep_unnorm, rep_norm = self.get_representative_class_image(p)
+            predicted_classes_images.append(rep_unnorm)
+            predicted_classes_images_normalized.append(rep_norm)
 
         all_features = features_for_prediction.copy()
         for p in predictions:
@@ -240,7 +290,7 @@ class FeatureGridGenerator:
             all_images_normalized,
             all_images,
             self.model,
-            gamma=3,
+            gamma=self.gamma,
             with_color=True,
             active_means=self.active_mean
         )
