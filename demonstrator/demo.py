@@ -121,10 +121,21 @@ def update_button_highlights(current_accuracy):
     updates = []
     for i in range(len(TOTAL_ACCS) - 1, -1, -1):
         acc = TOTAL_ACCS[i]
-        if acc <= current_accuracy:
+        if i == len(TOTAL_ACCS) - 1:
+            acc_prev = 0
+        else:
+            acc_prev = TOTAL_ACCS[i + 1]
+    
+        if acc_prev < current_accuracy and current_accuracy <= acc :
             updates.append(gr.update(variant="primary"))
         else:
             updates.append(gr.update(variant="secondary"))
+
+    n1_limit = TOTAL_ACCS[0]
+    if n1_limit < current_accuracy:
+        updates.append(gr.update(variant="primary"))
+    else:
+        updates.append(gr.update(variant="secondary"))
     return updates
 
 def regenerate_feature_grid_only(input_image_pil, k_predictions, output_logits, final_features, input_unnorm, input_norm):
@@ -216,10 +227,22 @@ if __name__ == '__main__':
                 button_components = []
                 for i in range(len(TOTAL_ACCS) - 1, -1, -1):
                     acc = TOTAL_ACCS[i]
-                    N_number = len(TOTAL_ACCS) - i  # FIX: N=1 for i=4, N=5 for i=0
-                    btn = gr.Button(f"N={N_number} ({acc:.3f})", size="sm", variant="secondary")
+                    acc_percentage = acc * 100
+                    if i == len(TOTAL_ACCS) - 1:
+                        acc_prev = 0
+                        acc_range = f"({acc_prev} - {acc_percentage:.1f}) %"
+                    else:
+                        acc_prev = TOTAL_ACCS[i + 1] * 100
+                        acc_range = f"({acc_prev:.1f} - {acc_percentage:.1f}) %"
+                    btn = gr.Button(f"nˡⁱᵐⁱᵗ = {i + 1}\u2003{acc_range}", size="sm", variant="secondary")
                     level_buttons.append((btn, acc))
                     button_components.append(btn)
+                acc = UPPER_BOUND
+                n1_limit = TOTAL_ACCS[0] * 100
+                acc_range = f"({n1_limit:.1f} - 100) %"
+                btn = gr.Button(f"no nˡⁱᵐⁱᵗ \u2003{acc_range}", size="sm", variant="secondary")
+                level_buttons.append((btn, acc))
+                button_components.append(btn)
                     
         # Hidden until image uploaded - tree display
         with gr.Column(visible=False) as tree_visualization:
