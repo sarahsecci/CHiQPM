@@ -85,34 +85,6 @@ class FeatureGridGenerator:
         normalized_image_tensor = normalize(image_tensor)
 
         return image_tensor, normalized_image_tensor
-    
-    # def get_representative_class_image(self, predicted_class):
-    #     """
-    #     Load the presaved representative image for a predicted class.
-        
-    #     Args:
-    #         predicted_class: Class index
-            
-    #     Returns:
-    #         PIL.Image or None if no representative found
-    #     """
-    #     class_folders = [f for f in os.listdir(self.dataset_path) if f.startswith(f"{predicted_class+1:03d}.")]
-        
-    #     if not class_folders:
-    #         return None
-
-    #     class_folder = class_folders[0]
-    #     representatives_path = self.representatives_path / class_folder
-        
-    #     if representatives_path.exists():
-    #         cropped_images = [f for f in os.listdir(representatives_path) if f.endswith('_cropped.jpg')]
-            
-    #         if cropped_images:
-    #             representative_image_path = representatives_path / cropped_images[0]
-    #             return Image.open(representative_image_path)
-        
-    #     print(f"Warning: No representative found for class {class_folder}")
-    #     return None
 
     def get_representative_class_image(self, predicted_class):
         """
